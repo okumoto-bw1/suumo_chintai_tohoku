@@ -7,6 +7,24 @@ import os
 import json
 from shapely.geometry import shape, MultiPolygon
 
+import psutil
+import time
+import threading
+
+# メモリ使用量を記録する関数
+def log_memory_usage():
+    process = psutil.Process(os.getpid())
+    while True:
+        mem_info = process.memory_info()
+        print(f"Memory Usage: {mem_info.rss / 1024 ** 2:.2f} MB")
+        time.sleep(5)  # 5秒ごとにメモリ使用量を記録
+
+# メモリ使用量を記録するスレッドを開始
+memory_thread = threading.Thread(target=log_memory_usage)
+memory_thread.daemon = True
+memory_thread.start()
+
+
 # データの前処理(引越し元)
 # --------------------------------------------------------------
 persona = pd.read_csv("事業所名で集計.csv",dtype="str")
