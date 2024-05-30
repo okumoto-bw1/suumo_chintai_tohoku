@@ -126,7 +126,7 @@ app.layout = html.Div([
                 dcc.Dropdown(
                     id='#2_dropdown',
                     options=options_category,
-                    value=[option['value'] for option in options_category],
+                    value=[],
                     multi=True,  # 複数選択を可能にする
                     style={"flex": "1"},
                 ),
