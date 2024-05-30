@@ -148,7 +148,7 @@ def update_graph_1(selected_pref_city,selected_category):
         return go.Figure()
     
     # データフレームをフィルタリング/グループ化
-    filtered_df = persona[(persona['pref_city'] == selected_pref_city) & (persona["category"].isin(selected_category))].copy()
+    filtered_df = persona[(persona['pref_city'] == selected_pref_city) & (persona["category"].isin(selected_category))]
     filtered_df = filtered_df[["category","sub_category","genre","name","count","num_uu_prefcity"]]
 
     grouped = filtered_df[["category","sub_category","genre","count","num_uu_prefcity"]].groupby(["category","sub_category","genre"],as_index=False).agg({
@@ -206,7 +206,7 @@ def update_table_1(selected_pref_city, selected_category):
         selected_category = [selected_category]
     
     # データフレームをフィルタリング
-    filtered_df = persona[(persona['pref_city'] == selected_pref_city) & (persona["category"].isin(selected_category))].copy()
+    filtered_df = persona[(persona['pref_city'] == selected_pref_city) & (persona["category"].isin(selected_category))]
     filtered_df = filtered_df[["category", "sub_category", "genre", "name", "count", "num_uu_prefcity"]]
 
     # スコアを計算
