@@ -13,6 +13,7 @@ persona = pd.read_csv("事業所名で集計.csv",dtype="str")
 persona["count"]=persona["count"].astype(int)
 persona["num_uu_prefcity"]=persona["num_uu_prefcity"].astype(int)
 persona['pref_city'] = persona['pref'] + persona['city']
+persona.drop(columns=["pref","city"],inplace=True)
 # --------------------------------------------------------------
 
 # GeoJSONデータの読み込み
