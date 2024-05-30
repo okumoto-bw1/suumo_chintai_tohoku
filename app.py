@@ -7,76 +7,41 @@ import os
 import json
 from shapely.geometry import shape, MultiPolygon
 
-# データの前処理(引越し元)
+# import psutil
+# import time
+# import threading
+
+# # メモリ使用量を記録する関数
+# def log_memory_usage():
+#     process = psutil.Process(os.getpid())
+#     while True:
+#         mem_info = process.memory_info()
+#         print(f"Memory Usage: {mem_info.rss / 1024 ** 2:.2f} MB")
+#         time.sleep(5)  # 5秒ごとにメモリ使用量を記録
+
+# # メモリ使用量を記録するスレッドを開始
+# memory_thread = threading.Thread(target=log_memory_usage)
+# memory_thread.daemon = True
+# memory_thread.start()
+
+
+# データの前処理
 # --------------------------------------------------------------
-persona = pd.read_csv("事業所名で集計.csv",dtype="str")
-persona["count"]=persona["count"].astype(int)
-persona["num_uu_prefcity"]=persona["num_uu_prefcity"].astype(int)
+persona = pd.read_csv("事業所名で集計.csv", usecols=["pref", "city", "category", "sub_category", "genre", "name", "count", "num_uu_prefcity"], dtype={"pref": "str", "city": "str", "category": "str", "sub_category": "str", "genre": "str", "name": "str", "count": "int32", "num_uu_prefcity": "int32"})
 persona['pref_city'] = persona['pref'] + persona['city']
-persona.drop(columns=["pref","city"],inplace=True)
+persona.drop(columns=["pref", "city"], inplace=True)
 # --------------------------------------------------------------
 
-# GeoJSONデータの読み込み
+# ドロップダウンのオプション生成
 # --------------------------------------------------------------
-with open('N03-21_210101.json', 'r', encoding='utf-8') as f:
-    geojson = json.load(f)
-# GeoJSONデータの各フィーチャーに新しいプロパティを追加
-for feature in geojson['features']:
-    props = feature['properties']
-    # None 値を空文字列で置き換える
-    n03_001 = props['N03_001'] if props['N03_001'] is not None else ''
-    n03_003 = props['N03_003'] if props['N03_003'] is not None else ''
-    n03_004 = props['N03_004'] if props['N03_004'] is not None else ''
-    combined_key = n03_001 + n03_003 + n03_004
-    props['combined_key'] = combined_key
-# --------------------------------------------------------------
+def generate_options(df, column):
+    unique_values = df[[column]].drop_duplicates().sort_values(column)
+    return [{'label': row[column], 'value': row[column]} for index, row in unique_values.iterrows()]
 
-# ドロップダウン(personaのpref_city)
-# --------------------------------------------------------------
-# 重複を排除し、昇順にソート
-unique_pref_city_1 = persona[['pref_city']].drop_duplicates().sort_values('pref_city')
-
-# 都道府県と市区郡の組み合わせの選択肢を昇順で生成
-options_pref_city_1 = [
-    {'label': row['pref_city'], 'value': row['pref_city']}
-    for index, row in unique_pref_city_1.iterrows()
-]
-# --------------------------------------------------------------
-
-# ドロップダウン(personaのcategory)
-# --------------------------------------------------------------
-# 重複を排除し、昇順にソート
-unique_category = persona[['category']].drop_duplicates().sort_values('category')
-
-# 都道府県と市区郡の組み合わせの選択肢を昇順で生成
-options_category = [
-    {'label': row['category'], 'value': row['category']}
-    for index, row in unique_category.iterrows()
-]
-# --------------------------------------------------------------
-
-# ドロップダウン(personaのsub_category)
-# --------------------------------------------------------------
-# 重複を排除し、昇順にソート
-unique_subcategory = persona[['sub_category']].drop_duplicates().sort_values('sub_category')
-
-# 都道府県と市区郡の組み合わせの選択肢を昇順で生成
-options_subcategory = [
-    {'label': row['sub_category'], 'value': row['sub_category']}
-    for index, row in unique_subcategory.iterrows()
-]
-# --------------------------------------------------------------
-
-# ドロップダウン(personaのgenre)
-# --------------------------------------------------------------
-# 重複を排除し、昇順にソート
-unique_genre = persona[['genre']].drop_duplicates().sort_values('genre')
-
-# 都道府県と市区郡の組み合わせの選択肢を昇順で生成
-options_genre = [
-    {'label': row['genre'], 'value': row['genre']}
-    for index, row in unique_genre.iterrows()
-]
+options_pref_city_1 = generate_options(persona, 'pref_city')
+options_category = generate_options(persona, 'category')
+options_subcategory = generate_options(persona, 'sub_category')
+options_genre = generate_options(persona, 'genre')
 # --------------------------------------------------------------
 
 
@@ -94,22 +59,21 @@ app.layout = html.Div([
         html.P("事業所(中分類)の滞在分析", style={'height': '40px', 'backgroundColor': '#4A90E2', 'color': 'white','display': 'flex', 'alignItems': 'center','fontFamily': 'Arial, sans-serif','fontWeight': 'bold'}),
         html.Div([
             html.Div([
-                html.P("居住地", style={'margin': '0 10px 0 0', 'color': '#4A90E2','display': 'flex', 'alignItems': 'center','fontFamily': 'Arial, sans-serif'}),  # 要素間のマージンを設定
+                html.P("居住地", style={'margin': '0 10px 0 0', 'color': '#4A90E2','display': 'flex', 'alignItems': 'center','fontFamily': 'Arial, sans-serif'}),
                 dcc.Dropdown(
                     id='#1_dropdown',
                     options=options_pref_city_1,
                     value="宮城県仙台市青葉区",
-                    # multi=True,  # 複数選択を可能にする
                     style={"flex": "1"},
                 ),
             ], style={"display": "flex", "alignItems": "center","width":"25%", "margin": '0 10px 0 10px'}),
             html.Div([
-                html.P("事業所の大分類", style={'margin': '0 10px 0 0', 'color': '#4A90E2','display': 'flex', 'alignItems': 'center','fontFamily': 'Arial, sans-serif'}),  # 要素間のマージンを設定
+                html.P("事業所の大分類", style={'margin': '0 10px 0 0', 'color': '#4A90E2','display': 'flex', 'alignItems': 'center','fontFamily': 'Arial, sans-serif'}),
                 dcc.Dropdown(
                     id='#2_dropdown',
                     options=options_category,
                     value=[],
-                    multi=True,  # 複数選択を可能にする
+                    multi=True,
                     style={"flex": "1"},
                 ),
             ], style={"display": "flex", "alignItems": "center","width":"75%", "margin": '0 10px 0 10px'}),
@@ -145,10 +109,10 @@ app.layout = html.Div([
                 id='#1_table',
                 columns=[{"name": i, "id": i} for i in ["category", "sub_category", "genre", "name", "score"]],
                 data=[],
-                filter_action="native",  # フィルタリング機能を有効にする
-                sort_action="native",    # 並び替え機能を有効にする
-                fixed_rows={'headers': True},  # 列固定を有効にする
-                page_size=20,  # 表示レコード数を制限
+                filter_action="native",
+                sort_action="native",
+                fixed_rows={'headers': True},
+                page_size=20,
                 style_table={'width': '98%', 'height': '95%'},
                 style_cell={'textAlign': 'left'},
             ),
@@ -162,45 +126,28 @@ app.layout = html.Div([
 # --------------------------------------------------------------
 @app.callback(
     Output('#1_graph', 'figure'),
-    [Input('#1_dropdown', 'value'),Input('#2_dropdown', 'value')]
+    [Input('#1_dropdown', 'value'), Input('#2_dropdown', 'value')]
 )
-def update_graph_1(selected_pref_city,selected_category):
+def update_graph_1(selected_pref_city, selected_category):
     if not selected_pref_city or not selected_category:
         return go.Figure()
     
-    # データフレームをフィルタリング/グループ化
     filtered_df = persona[(persona['pref_city'] == selected_pref_city) & (persona["category"].isin(selected_category))]
-    filtered_df = filtered_df[["category","sub_category","genre","name","count","num_uu_prefcity"]]
+    filtered_df = filtered_df[["category", "sub_category", "genre", "count", "num_uu_prefcity"]]
 
-    grouped = filtered_df[["category","sub_category","genre","count","num_uu_prefcity"]].groupby(["category","sub_category","genre"],as_index=False).agg({
-        "count":"sum",
+    grouped = filtered_df.groupby(["category", "sub_category", "genre"], as_index=False).agg({
+        "count": "sum",
         'num_uu_prefcity': 'min'
     })
 
-    grouped["subcate_genre"] = "["+grouped["sub_category"]+"]"+grouped["genre"]
+    grouped["subcate_genre"] = "[" + grouped["sub_category"] + "]" + grouped["genre"]
     grouped["score"] = grouped["count"] / grouped["num_uu_prefcity"]
+    grouped.sort_values(by="score", ascending=False, inplace=True)
 
-    # ratioが多い順にソート
-    grouped.sort_values(by="score", ascending=False,inplace=True)
+    traces = [go.Bar(x=group['subcate_genre'], y=group['score'], name=category) for category, group in grouped.groupby('category')]
 
-    # categoryごとにデータをグループ化
-    grouped2 = grouped.groupby('category')
-
-    # 棒グラフのトレースを作成
-    traces = []
-    for category, group in grouped2:
-        traces.append(go.Bar(
-            x=group['subcate_genre'],
-            y=group['score'],
-            name=category,
-        ))
-
-    # フィギュアを作成
     fig = go.Figure(data=traces)
-    
-    # レイアウトの設定
     fig.update_layout(
-        # barmode='stack',
         paper_bgcolor='rgba(0,0,0,0)',
         coloraxis_showscale=False,
         xaxis_title="中分類",
@@ -260,7 +207,6 @@ def update_table_1(selected_pref_city, selected_category, selected_subcategory, 
     if not selected_pref_city or not selected_category or not selected_subcategory or not selected_genre:
         return [], [{"name": i, "id": i} for i in ["category", "sub_category", "genre", "name", "score"]]
     
-    # selected_category, selected_subcategory, selected_genreをリストに変換
     if isinstance(selected_category, str):
         selected_category = [selected_category]
     if isinstance(selected_subcategory, str):
@@ -268,7 +214,6 @@ def update_table_1(selected_pref_city, selected_category, selected_subcategory, 
     if isinstance(selected_genre, str):
         selected_genre = [selected_genre]
     
-    # データフレームをフィルタリング
     filtered_df = persona[
         (persona['pref_city'] == selected_pref_city) & 
         (persona["category"].isin(selected_category)) &
@@ -276,11 +221,8 @@ def update_table_1(selected_pref_city, selected_category, selected_subcategory, 
         (persona["genre"].isin(selected_genre))
     ]
     filtered_df = filtered_df[["category", "sub_category", "genre", "name", "count", "num_uu_prefcity"]]
-
-    # スコアを計算
     filtered_df["score"] = filtered_df["count"] / filtered_df["num_uu_prefcity"]
 
-    # テーブルのデータとカラムを設定
     data = filtered_df.to_dict('records')
     columns = [{"name": i, "id": i} for i in ["category", "sub_category", "genre", "name", "score"]]
 
