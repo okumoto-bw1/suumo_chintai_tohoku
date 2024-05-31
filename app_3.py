@@ -107,7 +107,7 @@ app.layout = html.Div([
         html.Div([
             dash_table.DataTable(
                 id='#1_table',
-                columns=[{"name": i, "id": i} for i in ["category", "sub_category", "genre", "name", "count"]],
+                columns=[{"name": i, "id": i} for i in ["category", "sub_category", "genre", "name", "score"]],
                 data=[],
                 filter_action="native",
                 sort_action="native",
@@ -141,9 +141,10 @@ def update_graph_1(selected_pref_city, selected_category):
     })
 
     grouped["subcate_genre"] = "[" + grouped["sub_category"] + "]" + grouped["genre"]
-    grouped.sort_values(by="count", ascending=False, inplace=True)
+    grouped["score"] = grouped["count"] / grouped["num_uu_prefcity"]
+    grouped.sort_values(by="score", ascending=False, inplace=True)
 
-    traces = [go.Bar(x=group['subcate_genre'], y=group['count'], name=category) for category, group in grouped.groupby('category')]
+    traces = [go.Bar(x=group['subcate_genre'], y=group['score'], name=category) for category, group in grouped.groupby('category')]
 
     fig = go.Figure(data=traces)
     fig.update_layout(
@@ -204,7 +205,7 @@ def update_dropdown_4(selected_subcategory):
 )
 def update_table_1(selected_pref_city, selected_category, selected_subcategory, selected_genre):
     if not selected_pref_city or not selected_category or not selected_subcategory or not selected_genre:
-        return [], [{"name": i, "id": i} for i in ["category", "sub_category", "genre", "name", "count"]]
+        return [], [{"name": i, "id": i} for i in ["category", "sub_category", "genre", "name", "score"]]
     
     if isinstance(selected_category, str):
         selected_category = [selected_category]
@@ -220,9 +221,10 @@ def update_table_1(selected_pref_city, selected_category, selected_subcategory, 
         (persona["genre"].isin(selected_genre))
     ]
     filtered_df = filtered_df[["category", "sub_category", "genre", "name", "count", "num_uu_prefcity"]]
+    filtered_df["score"] = filtered_df["count"] / filtered_df["num_uu_prefcity"]
 
     data = filtered_df.to_dict('records')
-    columns = [{"name": i, "id": i} for i in ["category", "sub_category", "genre", "name", "count"]]
+    columns = [{"name": i, "id": i} for i in ["category", "sub_category", "genre", "name", "score"]]
 
     return data, columns
 # --------------------------------------------------------------
