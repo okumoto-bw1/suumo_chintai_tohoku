@@ -113,7 +113,7 @@ app.layout = html.Div([
                 sort_action="native",
                 fixed_rows={'headers': True},
                 page_size=20,
-                style_table={'width': '98%', 'height': '95%','minWidth': '1500px'},
+                style_table={'width': '98%', 'height': '95%'},
                 style_cell={'textAlign': 'left'},
             ),
         ], style={"display": "flex","justifyContent": "space-around", 'height': '700px'}),
